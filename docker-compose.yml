@@ -1,0 +1,50 @@
+
+services:
+  leap:
+    image: leap:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    expose:
+      - "${PORT:-8000}"
+    environment:
+      # API Keys
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
+      - SENDGRID_API_KEY=${SENDGRID_API_KEY}
+
+      # Email Configuration
+      - NOTIFICATION_EMAIL_FROM=${NOTIFICATION_EMAIL_FROM:-noreply@askleap.ai}
+
+      # LangSmith Configuration
+      - LANGSMITH_API_KEY=${LANGSMITH_API_KEY}
+      - LANGSMITH_TRACING=${LANGSMITH_TRACING:-true}
+      - LANGSMITH_ENDPOINT=${LANGSMITH_ENDPOINT:-https://api.smith.langchain.com}
+      - LANGSMITH_PROJECT=${LANGSMITH_PROJECT:-askleap-manim-ai}
+
+      # Storage Configuration
+      - STORAGE_TYPE=supabase
+      - USE_SUPABASE_STORAGE=true
+      - SUPABASE_STORAGE_BUCKET=videos
+
+      # Application Configuration
+      - BASE_URL=${BASE_URL:-http://askleap.ai}
+      - PORT=${PORT:-8000}
+      - PYTHONPATH=/app
+    volumes:
+      - ./generated:/app/backend/generated
+    restart: unless-stopped
+    command: uvicorn leap.api_server:app --host 0.0.0.0 --port ${PORT:-8000}
+    deploy:
+      replicas: 8 # Run 8 instances
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "8000:80" # Map host port 8000 to container port 80
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - leap
+    restart: unless-stopped

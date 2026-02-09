@@ -1,0 +1,171 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=IBM+Plex+Mono:wght@400;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 13% 18%;
+    --foreground: 0 0% 98%;
+
+    --card: 220 13% 23%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 220 13% 23%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 260 73% 65%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 20% 98%;
+
+    --muted: 220 13% 28%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 262 83% 58%;
+    --accent-foreground: 210 20% 98%;
+
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 210 20% 98%;
+
+    --border: 217 33% 30%;
+    --input: 217 33% 25%;
+    --ring: 262 83% 58%;
+
+    --radius: 0;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  html {
+    font-size: 18px;
+  }
+
+  body {
+    @apply bg-retro-beige text-retro-black text-lg;
+  }
+
+  h1 {
+    @apply text-4xl;
+  }
+
+  h2 {
+    @apply text-3xl;
+  }
+
+  label {
+    @apply text-base !important;
+  }
+
+  input,
+  select,
+  textarea {
+    @apply text-lg !important;
+  }
+
+  button {
+    @apply text-base !important;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+}
+
+@layer components {
+  .retro-window {
+    @apply bg-retro-lightgray border-2 border-black shadow-retro-window rounded-none overflow-hidden;
+  }
+
+  .retro-window-title {
+    @apply text-white py-2 px-3 font-bold text-lg flex items-center justify-between;
+  }
+
+  .retro-window-title-buttons {
+    @apply flex space-x-1;
+  }
+
+  .retro-window-button {
+    @apply w-3 h-3 border border-black rounded-none;
+  }
+
+  .retro-window-content {
+    @apply p-4;
+  }
+
+  .retro-input {
+    @apply bg-white border-2 border-retro-darkgray shadow-retro-inset px-3 py-3 w-full font-mono focus:outline-none focus:border-retro-green text-lg;
+  }
+
+  .retro-button {
+    @apply px-5 py-3 bg-retro-lightgray border-2 border-black shadow-retro-outset active:shadow-retro-inset transition-shadow font-pixel text-base tracking-wider text-center uppercase;
+  }
+
+  .retro-button-primary {
+    @apply retro-button text-white border-none;
+  }
+
+  .crt-screen {
+    @apply relative bg-retro-black rounded-md overflow-hidden;
+  }
+
+  .crt-screen::before {
+    content: "";
+    @apply absolute inset-0 z-10 pointer-events-none bg-gradient-to-b from-transparent to-black/20 mix-blend-overlay;
+  }
+
+  .crt-screen::after {
+    content: "";
+    @apply absolute top-0 left-0 right-0 h-[1px] bg-white/10 z-20 animate-scanline;
+  }
+
+  .scanlines {
+    background: repeating-linear-gradient(to bottom,
+        transparent 0px,
+        transparent 1px,
+        rgba(0, 0, 0, 0.05) 1px,
+        rgba(0, 0, 0, 0.05) 2px);
+    @apply absolute inset-0 z-10 pointer-events-none;
+  }
+
+  .vhs-effect {
+    @apply relative overflow-hidden;
+  }
+
+  .vhs-effect::before {
+    content: "";
+    @apply absolute inset-0 z-10 pointer-events-none bg-gradient-to-b from-transparent to-black/10 mix-blend-overlay;
+  }
+
+  .vhs-effect::after {
+    content: "";
+    @apply absolute inset-0 z-20 pointer-events-none bg-retro-green/5 mix-blend-color;
+  }
+
+  .loading-bar {
+    @apply h-2 bg-retro-darkgray overflow-hidden;
+  }
+
+  .loading-bar-progress {
+    @apply h-full animate-loading-progress;
+  }
+
+  .cursor-blink {
+    @apply inline-block w-2 h-4 bg-retro-black align-middle animate-blink;
+  }
+
+  .retro-chip {
+    @apply inline-flex items-center px-2 py-1 text-xs font-mono text-white border border-black;
+  }
+}

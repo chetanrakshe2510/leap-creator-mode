@@ -1,0 +1,94 @@
+"""
+Unit tests for the API module.
+"""
+import pytest
+from unittest.mock import patch, MagicMock
+from fastapi.testclient import TestClient
+
+from askleap.api import app
+from askleap.workflow.state import GraphState
+
+# Create test client
+client = TestClient(app)
+
+@pytest.fixture
+def mock_workflow():
+    with patch('askleap.api.workflow') as mock:
+        yield mock
+
+def test_generate_animation_default_params(mock_workflow):
+    """Test generating an animation with default parameters."""
+    # Mock the workflow
+    mock_state = MagicMock(spec=GraphState)
+    mock_state.execution_result = {
+        "success": True,
+        "output_file": "/path/to/file.mp4"
+    }
+    mock_state.generated_code = "from manim import *\n\nclass GravityScene(Scene):\n    def construct(self):\n        pass"
+    mock_workflow.return_value = mock_state
+    
+    # Test request
+    response = client.post(
+        "/generate",
+        json={"prompt": "Explain gravity"}
+    )
+    
+    assert response.status_code == 200
+    assert "task_id" in response.json()
+
+def test_generate_animation_custom_params(mock_workflow):
+    """Test generating an animation with custom parameters."""
+    # Mock the workflow
+    mock_state = MagicMock(spec=GraphState)
+    mock_state.execution_result = {
+        "success": True,
+        "output_file": "/path/to/file.mp4"
+    }
+    mock_workflow.return_value = mock_state
+    
+    # Test request
+    response = client.post(
+        "/generate",
+        json={
+            "prompt": "Explain gravity",
+            "quality": "high",
+            "voice_model": "custom"
+        }
+    )
+    
+    assert response.status_code == 200
+    assert "task_id" in response.json()
+
+def test_get_animation_status():
+    """Test getting animation status."""
+    # Create a test task ID
+    task_id = "test_task_123"
+    
+    # Test request
+    response = client.get(f"/status/{task_id}")
+    
+    assert response.status_code == 404  # Should return 404 if task not found
+
+@pytest.mark.asyncio
+async def test_background_task_execution(mock_workflow):
+    """Test background task execution."""
+    mock_state = MagicMock(spec=GraphState)
+    mock_state.execution_result = {
+        "success": True,
+        "output_file": "/path/to/file.mp4"
+    }
+    mock_workflow.return_value = mock_state
+    
+    # Test request
+    response = client.post(
+        "/generate",
+        json={"prompt": "Explain gravity"}
+    )
+    
+    assert response.status_code == 200
+    task_id = response.json()["task_id"]
+    
+    # Check initial status
+    status_response = client.get(f"/status/{task_id}")
+    assert status_response.status_code == 200
+    assert status_response.json()["status"] in ["pending", "processing"] 
