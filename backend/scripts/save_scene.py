@@ -50,6 +50,12 @@ def save_scene(scene_name):
         shutil.copy2(CURRENT_VIDEO_FILE, dest_video)
         print(f"Saved video to: {dest_video}")
         
+    # 4. Cleanup review frames
+    FRAMES_DIR = FRONTEND_VIDEOS_DIR / "frames"
+    if FRAMES_DIR.exists():
+        shutil.rmtree(FRAMES_DIR)
+        print("Cleaned up review frames.")
+        
     print(f"\nSuccess! Scene '{scene_name}' saved.")
 
 if __name__ == "__main__":

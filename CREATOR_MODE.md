@@ -59,6 +59,25 @@ docker compose exec leap python scripts/save_scene.py BubbleSort
 ```
 This saves to `backend/leap/saved_scenes/BubbleSort/`.
 
+## Reviewing & Correcting Scenes
+
+After rendering, extract key frames for visual review before saving:
+
+```bash
+docker compose exec leap python scripts/extract_frames.py
+```
+*(Optional: set interval in seconds, e.g. `extract_frames.py 3` for every 3s)*
+
+Frames are saved to `frontend/public/videos/frames/` (visible on host).
+
+### Correction Workflow
+1. **Extract** — Run `extract_frames.py` after rendering.
+2. **Agent Reviews** — Agent views the frames and identifies issues.
+3. **Improvement Plan** — Agent prepares a correction plan for your review.
+4. **You Approve** — Review the plan and approve or request changes.
+5. **Agent Fixes** — Agent updates `current_scene.py` and re-renders.
+6. **Repeat** until satisfied, then **Save**.
+
 ## Troubleshooting
 -   If "Service not running": Run `docker compose up -d`.
 -   If video doesn't update: Check Terminal 1 for Python errors.

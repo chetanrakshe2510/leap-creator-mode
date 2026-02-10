@@ -22,7 +22,7 @@ build/*
 *.egg
 *.whl
 backend/leap/saved_scenes/*
-
+frontend/public/videos/frames/*
 
 # Supabase
 .supabase/
