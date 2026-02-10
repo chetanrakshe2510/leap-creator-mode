@@ -1,91 +1,115 @@
 from manim import *
+import numpy as np
 
-class SquareSumFormula(Scene):
+class NormalizationIntuition(Scene):
     def construct(self):
-        # Configuration
-        a = 2
-        b = 1
-        
-        # Colors
-        color_a2 = BLUE
-        color_b2 = GREEN
-        color_ab = ORANGE
-        
-        # Create shapes
-        square_a = Square(side_length=a).set_fill(color_a2, opacity=0.5).set_stroke(color_a2)
-        square_b = Square(side_length=b).set_fill(color_b2, opacity=0.5).set_stroke(color_b2)
-        rect_ab1 = Rectangle(height=a, width=b).set_fill(color_ab, opacity=0.5).set_stroke(color_ab)
-        rect_ab2 = Rectangle(height=b, width=a).set_fill(color_ab, opacity=0.5).set_stroke(color_ab)
-        
-        # Labels
-        label_a2 = MathTex("a^2").move_to(square_a.get_center())
-        label_b2 = MathTex("b^2").move_to(square_b.get_center())
-        label_ab1 = MathTex("ab").move_to(rect_ab1.get_center())
-        label_ab2 = MathTex("ab").move_to(rect_ab2.get_center())
-        
-        # Group them for easier manipulation
-        part_a2 = VGroup(square_a, label_a2)
-        part_b2 = VGroup(square_b, label_b2)
-        part_ab1 = VGroup(rect_ab1, label_ab1)
-        part_ab2 = VGroup(rect_ab2, label_ab2)
-        
-        # Arrange initially separated
-        parts = VGroup(part_a2, part_ab1, part_ab2, part_b2).arrange(RIGHT, buff=0.5)
-        
         # Title
-        title = MathTex("(a+b)^2 = a^2 + 2ab + b^2").to_edge(UP)
+        title = Text("Why Normalize?", font_size=48).to_edge(UP)
         self.play(Write(title))
         self.wait(1)
+
+        # 1. SETUP: UNNORMALIZED DATA
+        # Define Unnormalized Axes
+        # Feature 1 (X) is large scale: 0 to 1000
+        # Feature 2 (Y) is small scale: 0 to 10
+        axes = Axes(
+            x_range=[0, 1000, 100],
+            y_range=[0, 10, 1],
+            x_length=6,
+            y_length=4,
+            axis_config={"include_tip": True}
+        ).shift(LEFT * 2)
         
-        # Introduce parts
-        self.play(FadeIn(parts))
-        self.wait(1)
+        # Labels
+        x_label = axes.get_x_axis_label("Salary (0-100k)").scale(0.6)
+        y_label = axes.get_y_axis_label("Age (0-100)").scale(0.6)
         
-        # Animate assembly into a big square
-        # Target positions relative to a center point
-        center = ORIGIN + DOWN * 0.5
+        # Create unnormalized data points (stretched ellipse)
+        np.random.seed(42)
+        n_points = 100
+        rhos = np.random.uniform(0, 1, n_points)
+        thetas = np.random.uniform(0, 2*PI, n_points)
         
-        # Position logic:
-        # Top-Left: a^2
-        # Top-Right: ab (height a, width b)
-        # Bottom-Left: ab (height b, width a)
-        # Bottom-Right: b^2
+        # Ellipse parameters: center at (500, 5), radius x=400, radius y=1
+        x_raw = 500 + 400 * np.sqrt(rhos) * np.cos(thetas)
+        y_raw = 5 + 1 * np.sqrt(rhos) * np.sin(thetas)
         
-        # Offset calculations to center the whole (a+b) square
-        total_side = a + b
-        offset = center - np.array([total_side/2, total_side/2, 0])
+        dots = VGroup()
+        for x, y in zip(x_raw, y_raw):
+            dot = Dot(axes.c2p(x, y), color=BLUE, radius=0.06)
+            dots.add(dot)
+
+        # Contour lines (Ellipses) to visualize cost function shape
+        contours = VGroup()
+        for i in range(1, 4):
+            ellipse = Ellipse(width=axes.x_length * (i/3) * 0.8, height=axes.y_length * (i/3) * 0.2, color=RED, stroke_opacity=0.5)
+            ellipse.move_to(axes.c2p(500, 5))
+            contours.add(ellipse)
+
+        self.play(Create(axes), Write(x_label), Write(y_label))
+        self.play(FadeIn(dots), Create(contours))
         
-        # Manually move to forming positions
-        # Top-Left corner of square_a is at (0, total_side) relative to bottom-left of big square
-        # Let's align them relative to each other first
-        
-        self.play(
-            part_a2.animate.move_to(center + np.array([-b/2, b/2, 0])),
-            part_ab1.animate.move_to(center + np.array([a/2, b/2, 0])),
-            part_ab2.animate.move_to(center + np.array([-b/2, -a/2, 0])),
-            part_b2.animate.move_to(center + np.array([a/2, -a/2, 0])),
-            run_time=2
-        )
-        self.wait(1)
-        
-        # Brace for side lengths
-        brace_left = Brace(VGroup(square_a, rect_ab2), LEFT)
-        brace_bottom = Brace(VGroup(rect_ab2, square_b), DOWN)
-        
-        label_left = brace_left.get_text("a+b")
-        label_bottom = brace_bottom.get_text("a+b")
-        
-        self.play(
-            GrowFromCenter(brace_left),
-            Write(label_left),
-            GrowFromCenter(brace_bottom),
-            Write(label_bottom)
-        )
+        # Explanation text
+        explanation = Text("Unnormalized: Skewed Cost Function", font_size=24, color=RED).next_to(axes, DOWN)
+        self.play(Write(explanation))
         self.wait(2)
         
-        # Emphasize the equation parts
-        self.play(Indicate(part_a2[0]))
-        self.play(Indicate(part_ab1[0]), Indicate(part_ab2[0]))
-        self.play(Indicate(part_b2[0]))
+        # 2. TRANSFORMATION
+        # Moving to normalized space
         
+        # Target Axes: Standard Normal (centered at 0, unit variance)
+        target_axes = Axes(
+            x_range=[-3, 3, 1],
+            y_range=[-3, 3, 1],
+            x_length=4,
+            y_length=4,
+            axis_config={"include_tip": True}
+        ).shift(RIGHT * 3)
+        
+        target_x_label = target_axes.get_x_axis_label("Norm. Salary").scale(0.6)
+        target_y_label = target_axes.get_y_axis_label("Norm. Age").scale(0.6)
+        
+        # Normalized data points
+        x_norm = (x_raw - 500) / 400 * 2 # mapping roughly to -2, 2 range visually
+        y_norm = (y_raw - 5) / 1 * 2
+        
+        target_dots = VGroup()
+        for x, y in zip(x_norm, y_norm):
+            dot = Dot(target_axes.c2p(x/2, y/2), color=GREEN, radius=0.06) # /2 just to verify scale matches visual range
+            target_dots.add(dot)
+            
+        # Target Contours (Circles)
+        target_contours = VGroup()
+        for i in range(1, 4):
+            circle = Circle(radius=target_axes.x_length/2 * (i/3) * 0.7, color=GREEN, stroke_opacity=0.5)
+            circle.move_to(target_axes.c2p(0, 0))
+            target_contours.add(circle)
+            
+        # Formula
+        formula = MathTex(r"x' = \frac{x - \mu}{\sigma}", color=YELLOW).move_to(UP * 2)
+        
+        self.play(
+            Transform(explanation, Text("Normalized: Symmetric Cost Function", font_size=24, color=GREEN).next_to(target_axes, DOWN)),
+            Write(formula)
+        )
+        
+        self.play(
+            Create(target_axes),
+            Write(target_x_label),
+            Write(target_y_label),
+            Transform(dots, target_dots),
+            Transform(contours, target_contours),
+            run_time=3
+        )
+        
+        self.wait(2)
+        
+        # Gradient Descent Arrow
+        # On unnormalized (conceptual): zigzag
+        # On normalized: straight to center
+        
+        arrow = Arrow(target_axes.c2p(2, 2), target_axes.c2p(0, 0), color=YELLOW, buff=0)
+        grad_text = Text("Gradients point directly to minimum", font_size=20, color=YELLOW).next_to(arrow, RIGHT)
+        
+        self.play(GrowArrow(arrow), Write(grad_text))
         self.wait(2)
