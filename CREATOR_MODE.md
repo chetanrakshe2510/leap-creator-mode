@@ -45,6 +45,20 @@ Do not explain the code. Just write the file
 2.  Ensure it saves the code to: `backend/leap/templates/examples/current_scene.py`
 3.  The video will appear at `frontend/public/videos/preview.mp4`.
 
+## Saving Your Work
+
+To save the current scene and video to a permanent folder:
+
+```bash
+docker compose exec leap python scripts/save_scene.py [YourSceneName]
+```
+
+Example:
+```bash
+docker compose exec leap python scripts/save_scene.py BubbleSort
+```
+This saves to `backend/leap/saved_scenes/BubbleSort/`.
+
 ## Troubleshooting
 -   If "Service not running": Run `docker compose up -d`.
 -   If video doesn't update: Check Terminal 1 for Python errors.

@@ -21,7 +21,7 @@ dist/*
 build/*
 *.egg
 *.whl
-
+backend/leap/saved_scenes/*
 
 
 # Supabase
