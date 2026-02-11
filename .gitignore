@@ -21,7 +21,7 @@ dist/*
 build/*
 *.egg
 *.whl
-backend/leap/saved_scenes/*
+backend/leap/saved_scenes/*.mp4
 frontend/public/videos/frames/*
 
 # Supabase
