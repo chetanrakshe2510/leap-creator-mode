@@ -1,84 +1,115 @@
-# Leap: Creator Mode (Antigravity Setup)
+# Leap: Creator Mode
 
-This project runs in "Creator Mode" where the Agent writes code and a local script instantly renders it.
+This project runs in **Creator Mode** — the Agent writes Manim scene code and a local Docker pipeline renders, verifies, and saves it automatically.
 
-## How to Run
+---
 
-### Terminal 1: The Render Engine
-This watches for new files and renders them automatically.
+## Quick Start
+
+### Terminal 1: Start the Render Engine
 ```bash
-
 docker compose up -d
 cd 'e:\leap-main\leap-main'
 docker compose exec leap python -u scripts/watch_and_render.py
 ```
-*(Note: use `-u` for unbuffered output to see logs immediately)*
 
-### Terminal 2: The Agent (Chat)
-In your IDE Chat, use the "Manim Expert" system prompt.
+> **Smart Watcher v2** — Debounces file changes (2s), auto-extracts review frames, and ignores `test_`/`temp_` files.
 
-SYSTEM PROMPT: MANIM EXPERT MODE
+### Terminal 2: The Agent (IDE Chat)
 
-You are now an expert Manim Animation Engineer.
+Paste this system prompt into your IDE chat:
 
-Your Workflow:
+> **MANIM EXPERT MODE**
+>
+> You are an expert Manim Animation Engineer.
+> - I describe a concept → you write a complete, runnable `Scene` class.
+> - Save code to `backend/leap/templates/examples/current_scene.py` (triggers auto-render).
+> - Use `from manim import *`, `Create()` (not `ShowCreation`), `MathTex` for equations.
+> - Do not explain the code. Just write the file.
 
-I will describe a concept (e.g., "Bubble Sort").
+### Workflow
+1. Ask the Agent to create a scene.
+2. Code is saved to `backend/leap/templates/examples/current_scene.py`.
+3. Smart Watcher renders it and extracts frames automatically.
+4. Video appears at `frontend/public/videos/preview.mp4`.
+5. Frames appear at `frontend/public/videos/frames/` for review.
 
-You will write a complete, runnable Scene class.
+---
 
-Action: Save the code to backend/leap/templates/examples/current_scene.py.
+## Tools Reference
 
-Coding Rules:
-
-ALWAYS overwrite current_scene.py (this triggers my auto-renderer).
-
-Use from manim import *.
-
-Use Create() (not ShowCreation).
-
-Use MathTex for equations.
-
-Do not explain the code. Just write the file
-
-1.  Ask the Agent to create a scene.
-2.  Ensure it saves the code to: `backend/leap/templates/examples/current_scene.py`
-3.  The video will appear at `frontend/public/videos/preview.mp4`.
-
-## Saving Your Work
-
-To save the current scene and video to a permanent folder:
+### Save a Scene
+Saves the scene code + rendered video to a permanent folder.
 
 ```bash
-docker compose exec leap python scripts/save_scene.py [YourSceneName]
+# From default current_scene.py
+docker compose exec leap python scripts/save_scene.py <SceneName>
+
+# From a custom source file
+docker compose exec leap python scripts/save_scene.py <SceneName> <source_file>
 ```
 
-Example:
+**Example:**
 ```bash
 docker compose exec leap python scripts/save_scene.py BubbleSort
+docker compose exec leap python scripts/save_scene.py BeamEquilibrium beam_scene_final.py
 ```
-This saves to `backend/leap/saved_scenes/BubbleSort/`.
+Saves to → `backend/leap/saved_scenes/<SceneName>/`
 
-## Reviewing & Correcting Scenes
+---
 
-After rendering, extract key frames for visual review before saving:
+### Render Large Scenes (Multi-Part Pipeline)
+If a scene crashes with `ParseError` (too many objects for Docker), split it into multiple scene classes and use:
 
 ```bash
-docker compose exec leap python scripts/extract_frames.py
+docker compose exec leap python scripts/render_chain.py <scene_file> [OutputName]
 ```
-*(Optional: set interval in seconds, e.g. `extract_frames.py 3` for every 3s)*
 
-Frames are saved to `frontend/public/videos/frames/` (visible on host).
+**Example:**
+```bash
+docker compose exec leap python scripts/render_chain.py beam_scene_final.py BeamEquilibrium
+```
 
-### Correction Workflow
-1. **Extract** — Run `extract_frames.py` after rendering.
-2. **Agent Reviews** — Agent views the frames and identifies issues.
-3. **Improvement Plan** — Agent prepares a correction plan for your review.
-4. **You Approve** — Review the plan and approve or request changes.
-5. **Agent Fixes** — Agent updates `current_scene.py` and re-renders.
-6. **Repeat** until satisfied, then **Save**.
+**How it works:**
+1. Auto-detects all `Scene` classes in the file
+2. Renders each sequentially (fresh process per scene — avoids resource limits)
+3. Concatenates into a single `OutputName.mp4` via ffmpeg
+4. Copies final video to `frontend/public/videos/preview.mp4`
+
+---
+
+### Extract Review Frames (Manual)
+The Smart Watcher does this automatically, but you can also run it manually:
+
+```bash
+docker compose exec leap python scripts/extract_frames.py [video_path] [interval_seconds]
+```
+
+Defaults: `preview.mp4`, every `2s`. Frames saved to `frontend/public/videos/frames/`.
+
+---
+
+## Review & Correction Workflow
+
+```
+Write Scene → Render → Extract Frames → Agent Reviews → Fix → Repeat → Save
+```
+
+1. **Render** — Smart Watcher auto-renders on file save.
+2. **Extract** — Frames are auto-extracted (or run `extract_frames.py` manually).
+3. **Agent Reviews** — Agent views frames and identifies issues.
+4. **You Approve** — Review the agent's correction plan.
+5. **Agent Fixes** — Agent updates the scene and re-renders.
+6. **Save** — When satisfied, run `save_scene.py`.
+
+---
 
 ## Troubleshooting
--   If "Service not running": Run `docker compose up -d`.
--   If video doesn't update: Check Terminal 1 for Python errors.
--   If watcher stops detecting: Restart it with the commands in Terminal 1 section.
+
+| Symptom | Fix |
+|---|---|
+| "Service not running" | `docker compose up -d` |
+| Video doesn't update | Check Terminal 1 for Python errors |
+| Watcher stops detecting | Restart with Terminal 1 commands |
+| `ParseError: no element found` | Scene too large — split into parts, use `render_chain.py` |
+| Frames not appearing | Run `extract_frames.py` manually |
