@@ -4,7 +4,7 @@ import subprocess
 import shutil
 import os
 from pathlib import Path
-from watchdog.observers import Observer
+from watchdog.observers.polling import PollingObserver as Observer
 from watchdog.events import FileSystemEventHandler
 
 # Configuration
@@ -64,9 +64,23 @@ class SmartHandler(FileSystemEventHandler):
         print(f"\n[SmartWatcher] Starting render for {filepath.name}...")
         
         try:
-            # 1. Run Manim
-            # manim -qm -v WARNING --disable_caching [file]
-            cmd = ["manim", "-qm", "-v", "WARNING", "--disable_caching", str(filepath)]
+            # 1. Check for Vertical Mode
+            is_vertical = False
+            try:
+                with open(filepath, "r", encoding="utf-8") as f:
+                    content = f.read()
+                    if "# LEAP_VERTICAL" in content:
+                        is_vertical = True
+            except Exception as e:
+                print(f"Error reading file {filepath.name}: {e}")
+
+            # 2. Run Manim
+            if is_vertical:
+                print("Vertical mode detected (9:16). Rendering at 1080x1920...")
+                cmd = ["manim", "-v", "WARNING", "--disable_caching", "-r", "1080,1920", str(filepath)]
+            else:
+                # Default 720p30 (Manim -qm defaults to 720p, 16:9)
+                cmd = ["manim", "-qm", "-v", "WARNING", "--disable_caching", str(filepath)]
             
             # Run from BACKEND_DIR so paths resolve correctly
             result = subprocess.run(cmd, cwd=BACKEND_DIR, capture_output=True, text=True)
@@ -79,16 +93,16 @@ class SmartHandler(FileSystemEventHandler):
 
             print(f"Render success: {filepath.name}")
 
-            # 2. Find Output Video
-            # Manim structure: media/videos/[scene_name]/[resolution]/[scene_name].mp4
-            # We assume the most recently modified mp4 in media/videos/module_name/720p30 is the one
+            # 3. Find Output Video
+            # Manim structure: media/videos/[module_name]/[resolution]/[scene_name].mp4
+            # We search recursively in media/videos/[module_name] for the newest mp4 to handle any resolution
             module_name = filepath.stem
-            media_dir = BACKEND_DIR / "media" / "videos" / module_name / "720p30"
+            media_module_dir = BACKEND_DIR / "media" / "videos" / module_name
             
             latest_file = None
-            if media_dir.exists():
-                # Find newest mp4
-                mp4s = list(media_dir.glob("*.mp4"))
+            if media_module_dir.exists():
+                # Find newest mp4 recursively
+                mp4s = list(media_module_dir.glob("**/*.mp4"))
                 if mp4s:
                     latest_file = max(mp4s, key=lambda f: f.stat().st_mtime)
 
@@ -100,7 +114,7 @@ class SmartHandler(FileSystemEventHandler):
                 shutil.copy2(latest_file, OUTPUT_VIDEO_PATH)
                 print(f"Updated preview.mp4")
                 
-                # 3. Auto-Extract Frames (Optional)
+                # 4. Auto-Extract Frames (Optional)
                 print("Auto-extracting frames for review...")
                 extract_script = BACKEND_DIR / "scripts" / "extract_frames.py"
                 if extract_script.exists():

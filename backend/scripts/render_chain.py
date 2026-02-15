@@ -39,9 +39,13 @@ def render_chain(scene_file, output_name="FinalVideo"):
     scene_path = final_path.resolve()
     print(f"Resolved scene file: {scene_path}")
 
-    # 1. Detect Scene Classes
+    # 1. Detect Scene Classes & Vertical Mode
     with open(scene_path, 'r', encoding='utf-8') as f:
         content = f.read()
+    
+    is_vertical = "# LEAP_VERTICAL" in content
+    if is_vertical:
+        print("Vertical mode detected (9:16). Rendering at 1080x1920...")
     
     # Simple regex to find classes inheriting from Scene
     # Matches: class SceneName(Scene): or class SceneName(ThreeDScene):
@@ -60,12 +64,21 @@ def render_chain(scene_file, output_name="FinalVideo"):
         print(f"\n[render_chain] Rendering {scene_name}...")
         
         # Run manim in a subprocess to ensure fresh memory/resources for each scene
-        cmd = [
-            "manim", "-qm", 
-            "--disable_caching", # Optional: ensure fresh render
-            str(scene_path), 
-            scene_name
-        ]
+        if is_vertical:
+            cmd = [
+                "manim", "-v", "WARNING",
+                "--disable_caching",
+                "-r", "1080,1920",
+                str(scene_path), 
+                scene_name
+            ]
+        else:
+            cmd = [
+                "manim", "-qm", 
+                "--disable_caching",
+                str(scene_path), 
+                scene_name
+            ]
         
         ret = subprocess.run(cmd, cwd=BACKEND_DIR)
         
@@ -73,16 +86,22 @@ def render_chain(scene_file, output_name="FinalVideo"):
             print(f"Error rendering {scene_name}. Aborting chain.")
             sys.exit(1)
             
-        # Find the output video
-        # Manim default output: media/videos/{module_name}/720p30/{SceneName}.mp4
+        # Find the output video (search recursively to handle any resolution)
         module_name = scene_path.stem
-        video_path = BACKEND_DIR / "media" / "videos" / module_name / "720p30" / f"{scene_name}.mp4"
+        media_module_dir = BACKEND_DIR / "media" / "videos" / module_name
         
-        if video_path.exists():
+        video_path = None
+        if media_module_dir.exists():
+            # Find the specific scene video by name
+            matches = list(media_module_dir.glob(f"**/{scene_name}.mp4"))
+            if matches:
+                video_path = max(matches, key=lambda f: f.stat().st_mtime)
+        
+        if video_path and video_path.exists():
             rendered_videos.append(video_path)
             print(f"Success: {video_path}")
         else:
-            print(f"Error: Expected output video not found at {video_path}")
+            print(f"Error: Expected output video not found in {media_module_dir}")
             sys.exit(1)
 
     # 3. Concatenate Videos
@@ -104,7 +123,9 @@ def render_chain(scene_file, output_name="FinalVideo"):
             # f.write(f"file '{v.absolute()}'\n")
             f.write(f"file '{str(v.absolute()).replace(os.sep, '/')}'\n")
             
-    output_path = BACKEND_DIR / "media" / "videos" / scene_path.stem / "720p30" / f"{output_name}.mp4"
+    # Use the same resolution directory as the first rendered video
+    output_dir = rendered_videos[0].parent
+    output_path = output_dir / f"{output_name}.mp4"
     
     # Ensure output directory exists
     output_path.parent.mkdir(parents=True, exist_ok=True)
