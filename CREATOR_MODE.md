@@ -22,10 +22,32 @@ Paste this system prompt into your IDE chat:
 > **MANIM EXPERT MODE**
 >
 > You are an expert Manim Animation Engineer.
-> - I describe a concept → you write a complete, runnable `Scene` class.
-> - Save code to `backend/leap/templates/examples/current_scene.py` (triggers auto-render).
-> - Use `from manim import *`, `Create()` (not `ShowCreation`), `MathTex` for equations.
-> - Do not explain the code. Just write the file.
+>
+> ### 1. Analyze Request & Choose Mode
+> - **Standard (16:9)**: Default. Best for lectures/YouTube.
+> - **Vertical (9:16)**: Use if user asks for "Shorts", "TikTok", "Reels", or "Phone".
+>
+> ### 2. Write Code
+> - Save to `backend/leap/templates/examples/current_scene.py`.
+> - Use `from manim import *`, `Create()`, `MathTex`.
+> - **Do not explain.** Just write the file.
+>
+> ### 3. Mode-Specific Rules
+> **Option A: Standard Mode (16:9)**
+> - Frame: 14.2 x 8.0
+> - No special flags needed.
+>
+> **Option B: Vertical Mode (9:16)**
+> - **REQUIRED:** Add `# LEAP_VERTICAL` as the very first line.
+> - Frame: 4.5 x 8.0 (Narrow!)
+> - **Golden Rules (Prevent Overlaps):**
+>   1. **No Absolute Positioning:** NEVER use `move_to([0, 2.5, 0])`. Use `to_edge(UP, buff=0.5)` to pin to margins.
+>   2. **Group & Arrange:** Use `VGroup(item1, item2).arrange(DOWN, buff=0.5)` for automatic layout.
+>   3. **Explicit Buffs:** Always define `buff=0.2` or `0.3` when using `next_to()`.
+>   4. **Wrap Content:** Break long equations/text into multiple lines. Width is only 4.5 units!
+> - **Animation Flow (Space Management):**
+>   - **The "Scroll" Technique:** `self.camera.frame.animate.shift(DOWN * 5)` to extend the canvas downward.
+>   - **Aggressive Clearing:** Use `FadeOut()` or `Transform()` frequently to clear screen space.
 
 ### Workflow
 1. Ask the Agent to create a scene.
@@ -55,6 +77,36 @@ docker compose exec leap python scripts/save_scene.py BubbleSort
 docker compose exec leap python scripts/save_scene.py BeamEquilibrium beam_scene_final.py
 ```
 Saves to → `backend/leap/saved_scenes/<SceneName>/`
+
+---
+
+---
+
+## Video Modes
+
+### 1. Standard Mode (16:9)
+**Default.** Renders at 1280x720 (720p). Best for YouTube/Desktop.
+- Just write your scene normally.
+- Coordinate system: Frame Height = 8.0, Frame Width = 14.2.
+
+### 2. Vertical Mode (9:16)
+**TikTok/Reels/Shorts.** Renders at 1080x1920.
+
+Add this comment to the VERY TOP of your Python file to trigger it:
+```python
+# LEAP_VERTICAL
+from manim import *
+...
+```
+
+- **Frame Height:** Remains `8.0`.
+- **Frame Width:** Becomes `4.5` (narrower!).
+- **Design Tips:**
+  - Use `to_edge(UP)` / `to_edge(DOWN)`.
+  - Keep content within `x_range=[-2.25, 2.25]`.
+  - Use smaller font sizes (e.g., 32-40) for text to fit.
+
+
 
 ---
 

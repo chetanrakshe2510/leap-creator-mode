@@ -1,290 +1,198 @@
+# LEAP_VERTICAL
 from manim import *
 import numpy as np
 
-class Part1_Types(Scene):
-    """Three types of gradient descent with visual data usage."""
+class CocktailPartyICA(MovingCameraScene):
     def construct(self):
-        title = Text("Types of Gradient Descent", font_size=36, color=BLUE)
-        title.to_edge(UP, buff=0.4)
-        self.play(Write(title), run_time=0.8)
-
-        # Dataset representation — grid of dots
-        def make_data_grid(rows=4, cols=5, color=WHITE, fill=0.4):
-            dots = VGroup()
-            for r in range(rows):
-                for c in range(cols):
-                    sq = Square(side_length=0.22, color=color, fill_opacity=fill, stroke_width=1)
-                    sq.move_to(RIGHT * c * 0.28 + DOWN * r * 0.28)
-                    dots.add(sq)
-            dots.move_to(ORIGIN)
-            return dots
-
-        # ── TYPE 1: Batch GD ──
-        t1 = Text("1. Batch Gradient Descent", font_size=22, color=GREEN)
-        t1.next_to(title, DOWN, buff=0.4)
-        self.play(Write(t1), run_time=0.5)
-
-        batch_grid = make_data_grid(color=GREEN, fill=0.5)
-        batch_grid.shift(LEFT * 3 + DOWN * 0.8)
-        batch_lbl = Text("Full Dataset", font_size=12, color=GREEN).next_to(batch_grid, DOWN, buff=0.1)
-
-        arrow1 = Arrow(LEFT * 1.5 + DOWN * 0.8, RIGHT * 0 + DOWN * 0.8, color=WHITE, stroke_width=1.5, max_tip_length_to_length_ratio=0.2)
-        update1 = Text("1 update\nper epoch", font_size=12, color=GRAY).next_to(arrow1, RIGHT, buff=0.15)
-
-        # All highlighted
-        self.play(FadeIn(batch_grid), FadeIn(batch_lbl), run_time=0.4)
-        self.play(GrowArrow(arrow1), FadeIn(update1), run_time=0.4)
-
-        batch_props = VGroup(
-            Text("✓ Stable gradients", font_size=12, color=GREEN),
-            Text("✗ Slow on large data", font_size=12, color=RED),
-        ).arrange(DOWN, buff=0.05, aligned_edge=LEFT).next_to(update1, RIGHT, buff=0.3)
-        self.play(FadeIn(batch_props), run_time=0.3)
-        self.wait(0.8)
-
-        type1_group = VGroup(t1, batch_grid, batch_lbl, arrow1, update1, batch_props)
-
-        # ── TYPE 2: SGD ──
-        self.play(FadeOut(type1_group))
-        t2 = Text("2. Stochastic Gradient Descent (SGD)", font_size=22, color=GOLD)
-        t2.next_to(title, DOWN, buff=0.4)
-        self.play(Write(t2), run_time=0.5)
-
-        sgd_grid = make_data_grid(color=GRAY, fill=0.15)
-        sgd_grid.shift(LEFT * 3 + DOWN * 0.8)
-        # Highlight just one sample
-        sgd_grid[7].set_fill(GOLD, opacity=0.8)
-        sgd_grid[7].set_stroke(GOLD, width=2)
-        sgd_lbl = Text("1 Sample", font_size=12, color=GOLD).next_to(sgd_grid, DOWN, buff=0.1)
-
-        arrow2 = Arrow(LEFT * 1.5 + DOWN * 0.8, RIGHT * 0 + DOWN * 0.8, color=WHITE, stroke_width=1.5, max_tip_length_to_length_ratio=0.2)
-        update2 = Text("n updates\nper epoch", font_size=12, color=GRAY).next_to(arrow2, RIGHT, buff=0.15)
-
-        self.play(FadeIn(sgd_grid), FadeIn(sgd_lbl), run_time=0.4)
-        self.play(GrowArrow(arrow2), FadeIn(update2), run_time=0.4)
-
-        sgd_props = VGroup(
-            Text("✓ Fast updates", font_size=12, color=GREEN),
-            Text("✗ Noisy gradients", font_size=12, color=RED),
-        ).arrange(DOWN, buff=0.05, aligned_edge=LEFT).next_to(update2, RIGHT, buff=0.3)
-        self.play(FadeIn(sgd_props), run_time=0.3)
-
-        # Animate highlighting different samples
-        for idx in [3, 14, 9, 18]:
-            new_grid = make_data_grid(color=GRAY, fill=0.15)
-            new_grid.shift(LEFT * 3 + DOWN * 0.8)
-            new_grid[idx].set_fill(GOLD, opacity=0.8)
-            new_grid[idx].set_stroke(GOLD, width=2)
-            self.play(Transform(sgd_grid, new_grid), run_time=0.25)
-
-        self.wait(0.5)
-        type2_group = VGroup(t2, sgd_grid, sgd_lbl, arrow2, update2, sgd_props)
-
-        # ── TYPE 3: Mini-batch ──
-        self.play(FadeOut(type2_group))
-        t3 = Text("3. Mini-Batch Gradient Descent", font_size=22, color=TEAL)
-        t3.next_to(title, DOWN, buff=0.4)
-        self.play(Write(t3), run_time=0.5)
-
-        mb_grid = make_data_grid(color=GRAY, fill=0.15)
-        mb_grid.shift(LEFT * 3 + DOWN * 0.8)
-        # Highlight a batch (row 1)
-        for idx in [5, 6, 7, 8, 9]:
-            mb_grid[idx].set_fill(TEAL, opacity=0.6)
-            mb_grid[idx].set_stroke(TEAL, width=2)
-        mb_lbl = Text("Mini-Batch", font_size=12, color=TEAL).next_to(mb_grid, DOWN, buff=0.1)
-
-        arrow3 = Arrow(LEFT * 1.5 + DOWN * 0.8, RIGHT * 0 + DOWN * 0.8, color=WHITE, stroke_width=1.5, max_tip_length_to_length_ratio=0.2)
-        update3 = Text("n/batch updates\nper epoch", font_size=12, color=GRAY).next_to(arrow3, RIGHT, buff=0.15)
-
-        self.play(FadeIn(mb_grid), FadeIn(mb_lbl), run_time=0.4)
-        self.play(GrowArrow(arrow3), FadeIn(update3), run_time=0.4)
-
-        mb_props = VGroup(
-            Text("✓ Balanced speed & stability", font_size=12, color=GREEN),
-            Text("✓ GPU-friendly", font_size=12, color=GREEN),
-        ).arrange(DOWN, buff=0.05, aligned_edge=LEFT).next_to(update3, RIGHT, buff=0.3)
-        self.play(FadeIn(mb_props), run_time=0.3)
-
-        # Animate different mini-batches highlighted
-        for batch_start in [0, 10, 15]:
-            new_grid = make_data_grid(color=GRAY, fill=0.15)
-            new_grid.shift(LEFT * 3 + DOWN * 0.8)
-            for idx in range(batch_start, min(batch_start + 5, 20)):
-                new_grid[idx].set_fill(TEAL, opacity=0.6)
-                new_grid[idx].set_stroke(TEAL, width=2)
-            self.play(Transform(mb_grid, new_grid), run_time=0.3)
-
-        best = Text("→ Most common in practice!", font_size=16, color=YELLOW)
-        best.to_edge(DOWN, buff=0.2)
-        self.play(Write(best), run_time=0.5)
-        self.wait(1.5)
-
-        # Summary side by side
-        self.play(*[FadeOut(m) for m in self.mobjects if m != title])
-
-        summary_title = Text("Comparison", font_size=22, color=YELLOW).next_to(title, DOWN, buff=0.35)
-        self.play(Write(summary_title), run_time=0.3)
-
-        # Table
-        header = VGroup(
-            Text("Type", font_size=12, color=GRAY),
-            Text("Data Used", font_size=12, color=GRAY),
-            Text("Speed", font_size=12, color=GRAY),
-            Text("Stability", font_size=12, color=GRAY),
-        ).arrange(RIGHT, buff=0.8)
-
-        r1 = VGroup(
-            Text("Batch", font_size=12, color=GREEN),
-            Text("All", font_size=12, color=WHITE),
-            Text("Slow", font_size=12, color=RED),
-            Text("High", font_size=12, color=GREEN),
-        ).arrange(RIGHT, buff=0.95)
-        r2 = VGroup(
-            Text("SGD", font_size=12, color=GOLD),
-            Text("1", font_size=12, color=WHITE),
-            Text("Fast", font_size=12, color=GREEN),
-            Text("Low", font_size=12, color=RED),
-        ).arrange(RIGHT, buff=1.1)
-        r3 = VGroup(
-            Text("Mini-batch", font_size=12, color=TEAL),
-            Text("Subset", font_size=12, color=WHITE),
-            Text("Medium", font_size=12, color=YELLOW),
-            Text("Medium", font_size=12, color=YELLOW),
-        ).arrange(RIGHT, buff=0.7)
-
-        table = VGroup(header, r1, r2, r3).arrange(DOWN, buff=0.2)
-        table.next_to(summary_title, DOWN, buff=0.3)
-        sep = Line(header.get_left() + DOWN * 0.12, header.get_right() + DOWN * 0.12, color=GRAY, stroke_width=1)
-
-        self.play(FadeIn(header), Create(sep), run_time=0.3)
-        self.play(FadeIn(r1), run_time=0.25)
-        self.play(FadeIn(r2), run_time=0.25)
-        self.play(FadeIn(r3), run_time=0.25)
-
-        # Visual: convergence paths on contour
-        ax = Axes(
-            x_range=[-3, 3, 1], y_range=[-3, 3, 1],
-            x_length=3.5, y_length=3,
-            axis_config={"include_numbers": False, "stroke_width": 0.5},
-        ).to_edge(DOWN, buff=0.15)
-
-        # Elliptical contours
-        contours = VGroup()
-        for r in [0.4, 0.8, 1.2, 1.6, 2.0]:
-            e = Ellipse(width=r*2, height=r*1.5, color=BLUE_D, stroke_width=0.5, stroke_opacity=0.4)
-            e.move_to(ax.c2p(0, 0))
-            contours.add(e)
-
-        self.play(Create(ax), Create(contours), run_time=0.5)
-
-        # Batch: smooth direct path
-        batch_path = VMobject(color=GREEN, stroke_width=1.5)
-        batch_pts = [ax.c2p(-2, 2), ax.c2p(-1.2, 1.1), ax.c2p(-0.5, 0.4), ax.c2p(-0.1, 0.1), ax.c2p(0, 0)]
-        batch_path.set_points_smoothly(batch_pts)
-        bl = Text("Batch", font_size=9, color=GREEN).next_to(ax.c2p(-2, 2), LEFT, buff=0.05)
-
-        # SGD: noisy path
-        sgd_path = VMobject(color=GOLD, stroke_width=1.5)
-        sgd_pts = [ax.c2p(2, 2), ax.c2p(1.5, 0.5), ax.c2p(2.2, 1.0), ax.c2p(0.8, -0.5), ax.c2p(1.0, 0.3), ax.c2p(-0.3, -0.2), ax.c2p(0.2, 0.1), ax.c2p(0, 0)]
-        sgd_path.set_points_smoothly(sgd_pts)
-        sl = Text("SGD", font_size=9, color=GOLD).next_to(ax.c2p(2, 2), RIGHT, buff=0.05)
-
-        self.play(Create(batch_path), FadeIn(bl), run_time=0.6)
-        self.play(Create(sgd_path), FadeIn(sl), run_time=0.6)
+        # FIX 1: "Horizontal Overflow" - Labels ABOVE axes
+        # FIX 2: "Teleportation" - Arrange before FadeIn
+        # FIX 3: Reference Mismatches - FadeOut correct transformed objects
+        # FIX 4: Pacing - Combine FadeOut and Camera Move
+        
+        # --- Common Config ---
+        axes_config = {
+            "x_range": [0, 8, 1],
+            "y_range": [-1.5, 1.5, 1],
+            "x_length": 4.0,
+            "y_length": 1.5,
+            "axis_config": {"include_ticks": False, "tip_shape": StealthTip}
+        }
+        
+        # --- Step 1: The Hidden Reality (Sources S) ---
+        title = Text("Original Sources (Hidden)", font_size=32, weight=BOLD)
+        
+        # Source 1: Sine (Singer)
+        axes_s1 = Axes(**axes_config)
+        s1_func = lambda t: 0.5 * np.sin(3 * t)
+        plot_s1 = axes_s1.plot(s1_func, color=BLUE)
+        # Fix 1: Label ABOVE axis
+        label_s1 = Text("Person A (Singer)", font_size=24, color=BLUE).next_to(axes_s1, UP, buff=0.1)
+        group_s1 = VGroup(label_s1, axes_s1, plot_s1)
+        
+        # Source 2: Sawtooth (Reader)
+        axes_s2 = Axes(**axes_config)
+        s2_func = lambda t: 0.5 * (2 * (t % 1) - 1)
+        plot_s2 = axes_s2.plot(s2_func, color=RED)
+        # Fix 1: Label ABOVE axis
+        label_s2 = Text("Person B (Reader)", font_size=24, color=RED).next_to(axes_s2, UP, buff=0.1)
+        group_s2 = VGroup(label_s2, axes_s2, plot_s2)
+        
+        step1_group = VGroup(title, group_s1, group_s2).arrange(DOWN, buff=0.4)
+        step1_group.to_edge(UP, buff=1.0)
+        
+        self.play(Write(step1_group))
+        self.wait(1)
+        
+        # --- Step 2: The Environment (Mixing Matrix A) ---
+        # Formula X = A * S
+        matrix_A_tex = MathTex(
+            r"X = A \cdot S",
+            font_size=40
+        )
+        
+        matrix_num_tex = MathTex(
+            r"\begin{bmatrix} 0.8 & 0.3 \\ 0.2 & 0.7 \end{bmatrix}",
+            font_size=32, color=YELLOW
+        )
+        
+        matrix_label = Text("Mixing Matrix (Room Acoustics)", font_size=20, color=YELLOW)
+        
+        step2_group = VGroup(matrix_A_tex, matrix_num_tex, matrix_label).arrange(DOWN, buff=0.3)
+        step2_group.next_to(step1_group, DOWN, buff=0.8)
+        
+        # Scroll to show Step 2
+        self.play(
+            self.camera.frame.animate.move_to(step2_group.get_center()),
+            Write(step2_group)
+        )
         self.wait(2)
-
-
-class Part2_LearningRate(Scene):
-    """Learning rate effects: too large, too small, just right."""
-    def construct(self):
-        title = Text("Learning Rate Importance", font_size=36, color=BLUE)
-        title.to_edge(UP, buff=0.4)
-        self.play(Write(title), run_time=0.8)
-
-        alpha_eq = MathTex(r"w_{\text{new}} = w_{\text{old}} - \alpha \cdot \nabla L", font_size=28, color=WHITE)
-        alpha_eq.next_to(title, DOWN, buff=0.35)
-        self.play(Write(alpha_eq), run_time=0.5)
-
-        # Three side-by-side parabolas
-        def gauss_like(x):
-            return x**2
-
-        # ── TOO LARGE ──
-        ax1 = Axes(
-            x_range=[-4, 4, 1], y_range=[0, 16, 4],
-            x_length=3, y_length=2.5,
-            axis_config={"include_numbers": False, "stroke_width": 0.8},
-        ).shift(LEFT * 4 + DOWN * 1)
-        c1 = ax1.plot(gauss_like, x_range=[-4, 4], color=BLUE_B, stroke_width=1.5)
-        lbl1 = Text("α too large", font_size=14, color=RED).next_to(ax1, UP, buff=0.1)
-
-        # Bouncing path — overshooting
-        bounce_pts = [ax1.c2p(-3, 9), ax1.c2p(3.5, 12.25), ax1.c2p(-3.8, 14.44)]
-        bounce = VMobject(color=RED, stroke_width=2)
-        bounce.set_points_as_corners(bounce_pts)
-        dots1 = VGroup(*[Dot(p, color=RED, radius=0.05) for p in bounce_pts])
-
-        self.play(Create(ax1), Create(c1), FadeIn(lbl1), run_time=0.5)
-        self.play(Create(bounce), FadeIn(dots1), run_time=0.8)
-        diverge_txt = Text("Diverges!", font_size=11, color=RED).next_to(ax1, DOWN, buff=0.1)
-        self.play(Write(diverge_txt), run_time=0.3)
-
-        # ── TOO SMALL ──
-        ax2 = Axes(
-            x_range=[-4, 4, 1], y_range=[0, 16, 4],
-            x_length=3, y_length=2.5,
-            axis_config={"include_numbers": False, "stroke_width": 0.8},
-        ).shift(DOWN * 1)
-        c2 = ax2.plot(gauss_like, x_range=[-4, 4], color=BLUE_B, stroke_width=1.5)
-        lbl2 = Text("α too small", font_size=14, color=YELLOW).next_to(ax2, UP, buff=0.1)
-
-        # Tiny steps barely moving
-        tiny_pts = [ax2.c2p(-3, 9)]
-        w = -3.0
-        for _ in range(8):
-            w = w - 0.02 * (2 * w)  # very small alpha
-            tiny_pts.append(ax2.c2p(w, w**2))
-        tiny = VMobject(color=YELLOW, stroke_width=2)
-        tiny.set_points_as_corners(tiny_pts)
-        dots2 = VGroup(*[Dot(p, color=YELLOW, radius=0.04) for p in tiny_pts])
-
-        self.play(Create(ax2), Create(c2), FadeIn(lbl2), run_time=0.5)
-        self.play(Create(tiny), FadeIn(dots2), run_time=0.8)
-        slow_txt = Text("Very slow!", font_size=11, color=YELLOW).next_to(ax2, DOWN, buff=0.1)
-        self.play(Write(slow_txt), run_time=0.3)
-
-        # ── JUST RIGHT ──
-        ax3 = Axes(
-            x_range=[-4, 4, 1], y_range=[0, 16, 4],
-            x_length=3, y_length=2.5,
-            axis_config={"include_numbers": False, "stroke_width": 0.8},
-        ).shift(RIGHT * 4 + DOWN * 1)
-        c3 = ax3.plot(gauss_like, x_range=[-4, 4], color=BLUE_B, stroke_width=1.5)
-        lbl3 = Text("α just right", font_size=14, color=GREEN).next_to(ax3, UP, buff=0.1)
-
-        # Smooth convergence
-        good_pts = [ax3.c2p(-3, 9)]
-        w = -3.0
-        for _ in range(6):
-            w = w - 0.3 * (2 * w)
-            good_pts.append(ax3.c2p(w, w**2))
-        good = VMobject(color=GREEN, stroke_width=2)
-        good.set_points_as_corners(good_pts)
-        dots3 = VGroup(*[Dot(p, color=GREEN, radius=0.05) for p in good_pts])
-
-        self.play(Create(ax3), Create(c3), FadeIn(lbl3), run_time=0.5)
-        self.play(Create(good), FadeIn(dots3), run_time=0.8)
-        conv_txt = Text("Converges!", font_size=11, color=GREEN).next_to(ax3, DOWN, buff=0.1)
-        self.play(Write(conv_txt), run_time=0.3)
-
-        # Summary
-        summary = VGroup(
-            Text("Too large → overshoots & diverges", font_size=14, color=RED),
-            Text("Too small → painfully slow", font_size=14, color=YELLOW),
-            Text("Just right → efficient convergence", font_size=14, color=GREEN),
-        ).arrange(DOWN, buff=0.1, aligned_edge=LEFT).to_edge(DOWN, buff=0.1)
-
-        for s in summary:
-            self.play(Write(s), run_time=0.3)
+        
+        # --- Step 3: What We Observe (Mixed Signals X) ---
+        # Fix 4: Combine FadeOut with Camera Reset for smooth transition
+        
+        self.play(
+            FadeOut(step1_group),
+            FadeOut(step2_group),
+            self.camera.frame.animate.move_to(ORIGIN),
+            run_time=1.5
+        )
+        
+        # New Header for Step 3
+        eq_top = MathTex(r"X = A \cdot S", font_size=36).to_edge(UP, buff=1.0)
+        
+        # Mixed Signals
+        # x1 = 0.8s1 + 0.3s2
+        axes_x1 = Axes(**axes_config)
+        x1_func = lambda t: 0.8 * s1_func(t) + 0.3 * s2_func(t)
+        plot_x1 = axes_x1.plot(x1_func, color=PURPLE)
+        # Fix 1: Label ABOVE axis
+        label_x1 = Text("Mic 1 (Mixed)", font_size=24, color=PURPLE).next_to(axes_x1, UP, buff=0.1)
+        group_x1 = VGroup(label_x1, axes_x1, plot_x1)
+        
+        # x2 = 0.2s1 + 0.7s2
+        axes_x2 = Axes(**axes_config)
+        x2_func = lambda t: 0.2 * s1_func(t) + 0.7 * s2_func(t)
+        plot_x2 = axes_x2.plot(x2_func, color=ORANGE)
+        # Fix 1: Label ABOVE axis
+        label_x2 = Text("Mic 2 (Mixed)", font_size=24, color=ORANGE).next_to(axes_x2, UP, buff=0.1)
+        group_x2 = VGroup(label_x2, axes_x2, plot_x2)
+        
+        step3_group = VGroup(eq_top, group_x1, group_x2).arrange(DOWN, buff=0.4)
+        step3_group.to_edge(UP, buff=1.0)
+        
+        self.play(Write(step3_group))
         self.wait(2)
+        
+        # --- Step 4: The Core Logic (Non-Gaussianity) ---
+        # Fade out mixed waves to make room
+        self.play(
+            FadeOut(group_x1),
+            FadeOut(group_x2)
+        )
+        
+        # Bell Curve vs Spiky
+        axes_dist = Axes(
+            x_range=[-3, 3, 1],
+            y_range=[0, 1, 0.5],
+            x_length=3.0, y_length=1.5,
+            axis_config={"include_ticks": False}
+        ).next_to(eq_top, DOWN, buff=1.0)
+        
+        # Gaussian (Bell)
+        curve_gauss = axes_dist.plot(lambda x: np.exp(-x**2/2), color=GRAY)
+        label_gauss = Text("Mixed = Gaussian", font_size=20, color=GRAY).next_to(axes_dist, UP)
+        
+        # Non-Gaussian (Spiky/Super-Gaussian) - roughly
+        curve_nongauss = axes_dist.plot(lambda x: np.exp(-np.abs(x)), color=GREEN)
+        label_nongauss = Text("Source = Spiky", font_size=20, color=GREEN).next_to(axes_dist, UP)
+        
+        group_dist = VGroup(label_gauss, axes_dist, curve_gauss)
+        
+        self.play(Create(group_dist))
+        self.wait(1)
+        
+        self.play(
+            Transform(curve_gauss, curve_nongauss),
+            Transform(label_gauss, label_nongauss)
+        )
+        # Note: label_gauss is now label_nongauss visually, but variable name is still label_gauss in Python
+        # curve_gauss is now curve_nongauss
+        
+        rule_text = Text(
+            "ICA rotates data to find\nthe least bell-shaped curve!",
+            font_size=24, t2c={"ICA": GREEN}
+        ).next_to(axes_dist, DOWN, buff=0.5)
+        
+        self.play(Write(rule_text))
+        self.wait(2)
+        
+        # --- Step 5: The Grand Reveal ---
+        # Fix 3: FadeOut correct objects
+        self.play(
+            FadeOut(axes_dist),
+            FadeOut(curve_gauss), # This holds the transformed mobject
+            FadeOut(label_gauss), # This holds the transformed mobject
+            FadeOut(rule_text)
+        )
+        
+        # Fix 2: "Teleportation" - Arrange BEFORE FadeIn
+        # We need to bring back group_x1 and group_x2, but positioned at the very top
+        
+        # Group them for layout
+        top_reveal_group = VGroup(group_x1, group_x2).arrange(DOWN, buff=0.2)
+        top_reveal_group.to_edge(UP, buff=1.0)
+        
+        # Animate them appearing in their new spot
+        self.play(FadeIn(top_reveal_group))
+        
+        # Arrow W
+        arrow_w = Arrow(start=UP, end=DOWN, color=WHITE).next_to(top_reveal_group, DOWN, buff=0.3)
+        w_label = MathTex(r"W \approx A^{-1}", font_size=28).next_to(arrow_w, RIGHT)
+        
+        # Recovered Sources (Bottom)
+        # Rec 1 (Blue)
+        axes_r1 = Axes(**axes_config)
+        plot_r1 = axes_r1.plot(s1_func, color=BLUE)
+        # Fix 1: Label ABOVE axis
+        label_r1 = Text("Recovered A", font_size=24, color=BLUE).next_to(axes_r1, UP, buff=0.1)
+        group_r1 = VGroup(label_r1, axes_r1, plot_r1)
+        
+        # Rec 2 (Red)
+        axes_r2 = Axes(**axes_config)
+        plot_r2 = axes_r2.plot(s2_func, color=RED) 
+        # Fix 1: Label ABOVE axis
+        label_r2 = Text("Recovered B", font_size=24, color=RED).next_to(axes_r2, UP, buff=0.1)
+        group_r2 = VGroup(label_r2, axes_r2, plot_r2)
+        
+        bottom_section = VGroup(group_r1, group_r2).arrange(DOWN, buff=0.3)
+        bottom_section.next_to(arrow_w, DOWN, buff=0.3)
+        
+        # Need space? Scroll down.
+        self.play(
+            self.camera.frame.animate.move_to(bottom_section.get_center()),
+            GrowArrow(arrow_w), Write(w_label),
+            FadeIn(bottom_section, shift=UP),
+            run_time=2
+        )
+        
+        self.wait(3)
