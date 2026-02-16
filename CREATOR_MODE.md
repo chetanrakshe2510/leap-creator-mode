@@ -48,9 +48,29 @@ Paste this system prompt into your IDE chat:
 > - **Animation Flow (Space Management):**
 >   - **The "Scroll" Technique:** `self.camera.frame.animate.shift(DOWN * 5)` to extend the canvas downward.
 >   - **Aggressive Clearing:** Use `FadeOut()` or `Transform()` frequently to clear screen space.
+>
+> **Option C: Hybrid (Voiceover) Mode**
+> - **REQUIRED:** Inherit from `VoiceoverScene`.
+> - **REQUIRED:** Use `gTTS` service for placeholder audio.
+> - **Logic:**
+>   - NEVER use `self.wait(X)`.
+>   - Use `with self.voiceover(text="...") as tracker:`
+>   - **"Living Plots":** Visuals must NEVER freeze. Use `always_redraw()` + `ValueTracker` so graphs animate while waiting for audio.
+>   - Use `tracker.duration` to pace animations: `self.play(..., run_time=tracker.duration)`.
+>
+> **Option D: Two-Stage Workflow (Recommended)**
+> 1.  **Stage 1: Visual Sketch**
+>     -   Write standard Manim code using `self.wait(2)`.
+>     -   Focus on layout, colors, and animation flow.
+>     -   **Goal:** Fast iteration, verify visuals.
+> 2.  **Stage 2: Voice Sync**
+>     -   Refactor to `VoiceoverScene` + `gTTS`.
+>     -   Replace `wait()` with `voiceover()`.
+>     -   Ensure animations loop ("Living Plots").
+>     -   **Goal:** Perfect timing, ready for final audio.
 
 ### Workflow
-1. Ask the Agent to create a scene.
+1. Ask the Agent to create a scene (specify Stage 1 or 2).
 2. Code is saved to `backend/leap/templates/examples/current_scene.py`.
 3. Smart Watcher renders it and extracts frames automatically.
 4. Video appears at `frontend/public/videos/preview.mp4`.
