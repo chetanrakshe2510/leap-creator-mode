@@ -140,6 +140,11 @@ class AnimationService:
                 if local_video_path and Path(local_video_path).exists():
                     logger.info(f"Video file exists locally at: {local_video_path}")
                     
+                    # Check for audio file
+                    local_audio_path = execution_result.get("audio_file")
+                    if local_audio_path and Path(local_audio_path).exists():
+                        logger.info(f"Audio file exists locally at: {local_audio_path}")
+                    
                     # Upload to storage and get public URL
                     try:
                         public_url = self.storage_service.get_file_url(local_video_path)

@@ -61,7 +61,10 @@ def execute_code(
         # Update the state with the execution result
         if execution_result["success"]:
             output_file = execution_result.get("output_file", "Unknown")
+            audio_file = execution_result.get("audio_file")
             logger.info(f"Execution completed successfully. Output file: {output_file}")
+            if audio_file:
+                logger.info(f"Audio file extracted: {audio_file}")
             state["execution_result"] = execution_result
             state["error"] = None
         else:

@@ -129,11 +129,32 @@ class ManimService:
                 }
             
             self.logger.info(f"Generated video: {output_file[0]}")
+            
+            # Extract audio track
+            audio_file = output_file[0].with_suffix(".wav")
+            audio_path = None
+            try:
+                audio_cmd = [
+                    "ffmpeg", "-y",
+                    "-i", str(output_file[0]),
+                    "-vn",
+                    "-acodec", "pcm_s16le",
+                    "-ar", "44100",
+                    "-ac", "2",
+                    str(audio_file)
+                ]
+                subprocess.run(audio_cmd, check=True, capture_output=True)
+                self.logger.info(f"Extracted audio to: {audio_file}")
+                audio_path = str(audio_file)
+            except Exception as e:
+                self.logger.warning(f"Failed to extract audio: {e}")
+
             return {
                 "success": True,
                 "output": result.stdout,
                 "error": None,
-                "output_file": str(output_file[0])
+                "output_file": str(output_file[0]),
+                "audio_file": audio_path
             }
             
         except subprocess.CalledProcessError as e:

@@ -10,6 +10,7 @@ def save_scene(scene_name, source_file=None):
     TEMPLATE_DIR = BACKEND_DIR / "leap" / "templates" / "examples"
     SCENES_DIR = BACKEND_DIR / "leap" / "scenes"
     SAVED_SCENES_DIR = BACKEND_DIR / "leap" / "saved_scenes"
+    GENERATED_DIR = BACKEND_DIR / "generated"
     
     FRONTEND_VIDEOS_DIR = PROJECT_ROOT / "frontend" / "public" / "videos"
     
@@ -39,20 +40,33 @@ def save_scene(scene_name, source_file=None):
     print(f"Saving scene '{scene_name}' from {current_scene_file}...")
 
     # 2. Find Preview Video
-    # We need to find where the video was rendered. 
-    # Usually it's in media/videos/[module_name]/720p30/[SceneName].mp4
-    # OR if it was the last rendered video, it might be at frontend/public/videos/preview.mp4
-    
-    # Check for specific video file first (more reliable)
+    # Search in both media/ and generated/media/
     module_name = current_scene_file.stem
-    video_path = BACKEND_DIR / "media" / "videos" / module_name / "720p30" / f"{scene_name}.mp4"
+    search_dirs = [
+        BACKEND_DIR / "media" / "videos" / module_name,
+        GENERATED_DIR / "media" / "videos" / module_name
+    ]
+    
+    video_path = None
+    all_video_matches = []
+    
+    for s_dir in search_dirs:
+        if s_dir.exists():
+            all_video_matches.extend(list(s_dir.glob(f"**/{scene_name}.mp4")))
+    
+    if all_video_matches:
+        # Get the most recent match
+        video_path = max(all_video_matches, key=lambda f: f.stat().st_mtime)
     
     # Fallback to preview.mp4 if specific file not found
-    if not video_path.exists():
+    if not video_path or not video_path.exists():
         video_path = FRONTEND_VIDEOS_DIR / "preview.mp4"
         
-    if not video_path.exists():
-        print(f"Warning: Video not found at {video_path}. Saving only code.")
+    if not video_path or not video_path.exists():
+        print(f"Warning: Video for '{scene_name}' not found. Checked module dirs and preview.mp4.")
+        # We'll continue to save the code at least
+    else:
+        print(f"Found video at: {video_path}")
 
     # 3. Create Destination
     dest_dir = SAVED_SCENES_DIR / scene_name
@@ -67,11 +81,18 @@ def save_scene(scene_name, source_file=None):
     shutil.copy2(current_scene_file, dest_code)
     print(f"Saved code to: {dest_code}")
     
-    # Copy video if exists
+    # Copy video and audio if they exist
     if video_path.exists():
         dest_video = dest_dir / f"{scene_name}.mp4"
         shutil.copy2(video_path, dest_video)
         print(f"Saved video to: {dest_video}")
+        
+        # Also copy audio if it exists
+        audio_path = video_path.with_suffix(".wav")
+        if audio_path.exists():
+            dest_audio = dest_dir / f"{scene_name}.wav"
+            shutil.copy2(audio_path, dest_audio)
+            print(f"Saved audio to: {dest_audio}")
         
     # 5. Cleanup review frames
     FRAMES_DIR = FRONTEND_VIDEOS_DIR / "frames"
