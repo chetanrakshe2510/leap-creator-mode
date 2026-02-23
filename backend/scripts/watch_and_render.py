@@ -2,6 +2,7 @@ import sys
 import time
 import subprocess
 import shutil
+import json
 import os
 from pathlib import Path
 from watchdog.observers.polling import PollingObserver as Observer
@@ -14,8 +15,26 @@ BACKEND_DIR = PROJECT_ROOT / "backend"
 TEMPLATE_DIR = BACKEND_DIR / "leap" / "templates" / "examples"
 FRONTEND_PUBLIC_VIDEOS_DIR = PROJECT_ROOT / "frontend" / "public" / "videos"
 OUTPUT_VIDEO_PATH = FRONTEND_PUBLIC_VIDEOS_DIR / "preview.mp4"
+RENDER_STATUS_PATH = FRONTEND_PUBLIC_VIDEOS_DIR / "render_status.json"
 
 DEBOUNCE_SECONDS = 2.0
+
+
+def write_render_status(status, message="", scene_name=""):
+    """Write render_status.json to the frontend public directory."""
+    FRONTEND_PUBLIC_VIDEOS_DIR.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "status": status,
+        "message": message,
+        "scene": scene_name,
+        "timestamp": time.time()
+    }
+    try:
+        with open(RENDER_STATUS_PATH, "w", encoding="utf-8") as f:
+            json.dump(payload, f, indent=2)
+    except Exception as e:
+        print(f"[StatusWriter] Failed to write render_status.json: {e}")
+
 
 class SmartHandler(FileSystemEventHandler):
     def __init__(self):
@@ -62,6 +81,7 @@ class SmartHandler(FileSystemEventHandler):
 
     def render(self, filepath):
         print(f"\n[SmartWatcher] Starting render for {filepath.name}...")
+        write_render_status("rendering", f"Compiling {filepath.name}...", filepath.stem)
         
         try:
             # 1. Check for Vertical Mode
@@ -86,33 +106,44 @@ class SmartHandler(FileSystemEventHandler):
             result = subprocess.run(cmd, cwd=BACKEND_DIR, capture_output=True, text=True)
             
             if result.returncode != 0:
+                # --- ERROR: Write status JSON with traceback ---
+                stderr_lines = result.stderr.splitlines()
+                # Grab last 20 lines for a clean traceback
+                error_text = "\n".join(stderr_lines[-20:])
                 print(f"Error rendering {filepath.name}:")
-                # Print last 10 lines of stderr to avoid spam
-                print("\n".join(result.stderr.splitlines()[-15:]))
+                print(error_text)
+                write_render_status("error", error_text, filepath.stem)
                 return
 
             print(f"Render success: {filepath.name}")
 
-            # 3. Find Output Video
+            # 3. Find Output Video (ROBUST: scan entire media tree for newest mp4)
             # Manim structure: media/videos/[module_name]/[resolution]/[scene_name].mp4
-            # We search recursively in media/videos/[module_name] for the newest mp4 to handle any resolution
+            # We search the ENTIRE media/videos directory for the newest mp4
+            # modified AFTER we started the render, to handle any resolution folder.
             module_name = filepath.stem
             media_module_dir = BACKEND_DIR / "media" / "videos" / module_name
             
             latest_file = None
             if media_module_dir.exists():
-                # Find newest mp4 recursively
-                mp4s = list(media_module_dir.glob("**/*.mp4"))
+                # Find newest mp4 recursively, excluding partial_movie_files
+                mp4s = [
+                    f for f in media_module_dir.rglob("*.mp4")
+                    if "partial_movie_files" not in str(f)
+                ]
                 if mp4s:
                     latest_file = max(mp4s, key=lambda f: f.stat().st_mtime)
 
             if latest_file:
-                print(f"Found output: {latest_file.name}")
+                print(f"Found output: {latest_file}")
                 
                 # Copy to preview
                 FRONTEND_PUBLIC_VIDEOS_DIR.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(latest_file, OUTPUT_VIDEO_PATH)
                 print(f"Updated preview.mp4")
+                
+                # --- SUCCESS: Write status JSON ---
+                write_render_status("success", f"Rendered {latest_file.name}", filepath.stem)
                 
                 # 4. Auto-Extract Frames (Optional)
                 print("Auto-extracting frames for review...")
@@ -125,14 +156,19 @@ class SmartHandler(FileSystemEventHandler):
                 else: 
                     print("Warning: extract_frames.py not found.")
             else:
-                print(f"Warning: No output video found in {media_dir}")
+                error_msg = f"No output video found in {media_module_dir}"
+                print(f"Warning: {error_msg}")
+                write_render_status("error", error_msg, filepath.stem)
 
         except Exception as e:
-            print(f"Exception during render: {e}")
+            error_msg = f"Exception during render: {e}"
+            print(error_msg)
+            write_render_status("error", error_msg, filepath.stem)
 
 if __name__ == "__main__":
-    print(f"Smart Watcher v2 Active.")
+    print(f"Smart Watcher v3 Active.")
     print(f"Monitoring {TEMPLATE_DIR}")
+    print(f"Status file: {RENDER_STATUS_PATH}")
     print(f"Debounce: {DEBOUNCE_SECONDS}s")
 
     event_handler = SmartHandler()

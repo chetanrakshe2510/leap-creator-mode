@@ -10,6 +10,13 @@ interface VideoOutputProps {
   jobId: string;
 }
 
+interface RenderStatus {
+  status: 'success' | 'error' | 'rendering';
+  message: string;
+  scene: string;
+  timestamp: number;
+}
+
 const VideoOutput = ({ videoUrl, prompt, difficulty = "eli5", jobId }: VideoOutputProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const { toast } = useToast();
@@ -18,9 +25,47 @@ const VideoOutput = ({ videoUrl, prompt, difficulty = "eli5", jobId }: VideoOutp
   const [comment, setComment] = useState('');
   const [submittingFeedback, setSubmittingFeedback] = useState(false);
 
+  // --- Render Status Polling ---
+  const [renderStatus, setRenderStatus] = useState<RenderStatus | null>(null);
+  const [lastSuccessTimestamp, setLastSuccessTimestamp] = useState<number>(0);
+  const [videoSrc, setVideoSrc] = useState(videoUrl);
+
+  // Poll render_status.json every 2 seconds
+  useEffect(() => {
+    const pollStatus = async () => {
+      try {
+        const res = await fetch(`/videos/render_status.json?t=${Date.now()}`);
+        if (res.ok) {
+          const data: RenderStatus = await res.json();
+          setRenderStatus(data);
+
+          // If status is success and timestamp is newer, reload video
+          if (data.status === 'success' && data.timestamp > lastSuccessTimestamp) {
+            setLastSuccessTimestamp(data.timestamp);
+            setVideoSrc(`/videos/preview.mp4?t=${data.timestamp}`);
+          }
+        }
+      } catch {
+        // Silently ignore fetch errors (file may not exist yet)
+      }
+    };
+
+    const interval = setInterval(pollStatus, 2000);
+    pollStatus(); // Run immediately on mount
+    return () => clearInterval(interval);
+  }, [lastSuccessTimestamp]);
+
+  // Reload video element when videoSrc changes
   useEffect(() => {
     if (videoRef.current) {
       videoRef.current.load();
+    }
+  }, [videoSrc]);
+
+  // Also reload when parent videoUrl changes
+  useEffect(() => {
+    if (videoUrl) {
+      setVideoSrc(videoUrl);
     }
   }, [videoUrl]);
 
@@ -66,11 +111,28 @@ const VideoOutput = ({ videoUrl, prompt, difficulty = "eli5", jobId }: VideoOutp
     return labels[level as keyof typeof labels] || 'ELI5: Explain like I\'m 5';
   };
 
+  const isError = renderStatus?.status === 'error';
+  const isRendering = renderStatus?.status === 'rendering';
+
   return (
     <div className="retro-window w-full max-w-4xl mx-auto mb-8 animate-boot-up" style={{ animationDelay: '0.4s' }}>
       <div className="retro-window-title bg-retro-green">
         <div className="flex items-center space-x-2">
           <span>VIDEO PREVIEW</span>
+          {isRendering && (
+            <span style={{
+              color: '#FFD700',
+              fontSize: '0.75rem',
+              animation: 'pulse 1.5s ease-in-out infinite'
+            }}>
+              ⏳ RENDERING...
+            </span>
+          )}
+          {isError && (
+            <span style={{ color: '#FF4444', fontSize: '0.75rem' }}>
+              ❌ RENDER ERROR
+            </span>
+          )}
         </div>
         <div className="retro-window-title-buttons">
           <div className="retro-window-button bg-retro-yellow"></div>
@@ -80,9 +142,80 @@ const VideoOutput = ({ videoUrl, prompt, difficulty = "eli5", jobId }: VideoOutp
       </div>
 
       <div className="retro-window-content p-0">
-        <div className="crt-screen w-full aspect-video bg-retro-black overflow-hidden">
+        <div className="crt-screen w-full aspect-video bg-retro-black overflow-hidden" style={{ position: 'relative' }}>
           <div className="scanlines"></div>
-          {videoUrl ? (
+
+          {/* --- ERROR OVERLAY --- */}
+          {isError && (
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(180, 20, 20, 0.92)',
+              zIndex: 20,
+              display: 'flex',
+              flexDirection: 'column',
+              padding: '1rem',
+              overflow: 'auto',
+              fontFamily: 'monospace'
+            }}>
+              <div style={{
+                color: '#FF6B6B',
+                fontSize: '1.1rem',
+                fontWeight: 'bold',
+                marginBottom: '0.5rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.1em'
+              }}>
+                ⚠ MANIM COMPILATION ERROR
+              </div>
+              <pre style={{
+                color: '#FFD0D0',
+                fontSize: '0.72rem',
+                lineHeight: '1.4',
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
+                flex: 1,
+                overflow: 'auto',
+                margin: 0,
+                padding: '0.5rem',
+                backgroundColor: 'rgba(0,0,0,0.3)',
+                borderRadius: '0.25rem'
+              }}>
+                {renderStatus?.message}
+              </pre>
+            </div>
+          )}
+
+          {/* --- RENDERING OVERLAY --- */}
+          {isRendering && (
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.7)',
+              zIndex: 15,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontFamily: 'monospace'
+            }}>
+              <div style={{
+                color: '#FFD700',
+                fontSize: '1.4rem',
+                fontWeight: 'bold',
+                animation: 'pulse 1.5s ease-in-out infinite'
+              }}>
+                ⏳ Rendering {renderStatus?.scene || 'scene'}...
+              </div>
+            </div>
+          )}
+
+          {videoSrc ? (
             <video
               ref={videoRef}
               className="w-full h-full object-contain vhs-effect"
@@ -91,7 +224,7 @@ const VideoOutput = ({ videoUrl, prompt, difficulty = "eli5", jobId }: VideoOutp
               loop
               muted
             >
-              <source src={videoUrl} type="video/mp4" />
+              <source src={videoSrc} type="video/mp4" />
               Your browser does not support the video tag.
             </video>
           ) : (
@@ -104,7 +237,7 @@ const VideoOutput = ({ videoUrl, prompt, difficulty = "eli5", jobId }: VideoOutp
           )}
         </div>
 
-        {videoUrl && (
+        {videoSrc && (
           <div className="p-6 font-mono">
             <div className="mb-6">
               <div className="text-base md:text-lg text-retro-gray uppercase mb-2">TOPIC:</div>
