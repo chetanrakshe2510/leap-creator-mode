@@ -141,6 +141,13 @@ class SmartHandler(FileSystemEventHandler):
                 FRONTEND_PUBLIC_VIDEOS_DIR.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(latest_file, OUTPUT_VIDEO_PATH)
                 print(f"Updated preview.mp4")
+
+                # Also copy SRT if it exists
+                srt_file = latest_file.with_suffix(".srt")
+                if srt_file.exists():
+                    output_srt_path = FRONTEND_PUBLIC_VIDEOS_DIR / "preview.srt"
+                    shutil.copy2(srt_file, output_srt_path)
+                    print(f"Updated preview.srt")
                 
                 # --- SUCCESS: Write status JSON ---
                 write_render_status("success", f"Rendered {latest_file.name}", filepath.stem)

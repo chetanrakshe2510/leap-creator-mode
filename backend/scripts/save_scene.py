@@ -93,6 +93,13 @@ def save_scene(scene_name, source_file=None):
             dest_audio = dest_dir / f"{scene_name}.wav"
             shutil.copy2(audio_path, dest_audio)
             print(f"Saved audio to: {dest_audio}")
+            
+        # Also copy subtitles if they exist
+        srt_path = video_path.with_suffix(".srt")
+        if srt_path.exists():
+            dest_srt = dest_dir / f"{scene_name}.srt"
+            shutil.copy2(srt_path, dest_srt)
+            print(f"Saved subtitles to: {dest_srt}")
         
     # 5. Cleanup review frames
     FRAMES_DIR = FRONTEND_VIDEOS_DIR / "frames"
