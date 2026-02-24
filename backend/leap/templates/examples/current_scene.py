@@ -1,7 +1,12 @@
 # LEAP_VERTICAL
 from manim import *
 from manim_voiceover import VoiceoverScene
-from manim_voiceover.services.gtts import GTTSService
+import sys
+import os
+
+# Ensure leap module can be imported
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+from leap.services.kokoro_service import KokoroService
 
 # Force Vertical Canvas Configuration (9:16 Aspect Ratio)
 config.pixel_height = 1920
@@ -11,8 +16,13 @@ config.frame_width = 9.0
 
 class VisualThinkingVoiceover(VoiceoverScene, MovingCameraScene):
     def construct(self):
-        # 1. Setup Voiceover
-        self.set_speech_service(GTTSService(lang="en", tld="com"))
+        # 1. Setup Voiceover with Kokoro TTS
+        kokoro = KokoroService(
+            voice="am_michael", 
+            speed=1.0, 
+            server_url="http://host.docker.internal:5000/generate"
+        )
+        self.set_speech_service(kokoro)
 
         # --- TITLE ---
         title = Text(
@@ -112,8 +122,11 @@ class VisualThinkingVoiceover(VoiceoverScene, MovingCameraScene):
             y_length=3.5,
             x_length=3.0,
             bar_colors=[BLUE, GREEN],
-            bar_fill_opacity=0.8
+            # bar_fill_opacity is not a valid kwarg in older Manim, replacing with just colors
         ).next_to(retention_title, DOWN, buff=0.8)
+        
+        # In newer manim, BarChart bars are grouped differently. 
+        # Adding a quick fade-in for robustness.
 
         with self.voiceover(text="People typically remember only 20 percent of what they read...") as tracker:
             self.play(DrawBorderThenFill(chart), run_time=tracker.duration)

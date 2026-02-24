@@ -1,14 +1,13 @@
-from typing import Optional
+from typing import Optional, Any
 from leap.workflow.state import GraphState
 from leap.core.logging import setup_question_logger
-from leap.services import FileService, ManimService
 from leap.core.config import MAX_ATTEMPTS
 
 
 def execute_code(
     state: GraphState, 
-    file_service: Optional[FileService] = None,
-    manim_service: Optional[ManimService] = None
+    file_service: Optional[Any] = None,
+    manim_service: Optional[Any] = None
 ) -> GraphState:
     """Execute the generated Manim code and return the result.
     
@@ -24,6 +23,7 @@ def execute_code(
     logger.info("Executing Manim code")
     
     # Use provided services or create new ones
+    from leap.services import FileService, ManimService
     file_service = file_service or FileService()
     manim_service = manim_service or ManimService()
     

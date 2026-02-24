@@ -1,10 +1,9 @@
-from typing import  Optional
+from typing import  Optional, Any
 from langsmith import traceable
 
 from leap.workflow.state import GraphState
 from leap.core.logging import setup_question_logger
 from leap.models import ScenePlanResponse
-from leap.services import LLMService
 from leap.prompts import SCENE_PLANNING_PROMPTS
 from leap.prompts.base import PromptVersion
 
@@ -12,7 +11,7 @@ from leap.prompts.base import PromptVersion
 
 # Each scene should have clear objectives and specific animation notes."""
 
-def plan_scenes(state: GraphState, llm_service: Optional[LLMService] = None) -> GraphState:
+def plan_scenes(state: GraphState, llm_service: Optional[Any] = None) -> GraphState:
     """Plan the scenes based on user input.
     
     Args:
@@ -26,6 +25,7 @@ def plan_scenes(state: GraphState, llm_service: Optional[LLMService] = None) -> 
     logger.info(f"Planning scenes for input: {state['user_input']}")
     
     # Use provided service or create a new one
+    from leap.services import LLMService
     llm_service = llm_service or LLMService()
     
     try:

@@ -7,11 +7,10 @@ from typing import Dict, Any, Optional, List
 import re
 from leap.workflow.state import GraphState
 from leap.core.logging import setup_question_logger
-from leap.services.llm_service import LLMService
 from leap.models import ValidationResult
 
 
-def validate_input(state: GraphState, llm_service: Optional[LLMService] = None, **kwargs) -> GraphState:
+def validate_input(state: GraphState, llm_service: Optional[Any] = None, **kwargs) -> GraphState:
     """Validate the user input to ensure it's suitable for animation generation.
     
     Args:
@@ -62,6 +61,7 @@ def validate_input(state: GraphState, llm_service: Optional[LLMService] = None, 
         )
 
     # Use provided service or create a new one
+    from leap.services.llm_service import LLMService
     llm_service = llm_service or LLMService()
     
     logger.info("Using LLM to validate input")

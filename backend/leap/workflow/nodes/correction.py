@@ -3,7 +3,6 @@ from typing import Dict, Any, Optional
 from leap.workflow.state import GraphState
 from leap.core.logging import setup_question_logger
 from leap.models import ManimCodeResponse
-from leap.services import LLMService, FileService
 from leap.core.config import  MAX_ATTEMPTS
 from leap.prompts import ERROR_CORRECTION_PROMPTS
 from leap.prompts.base import PromptVersion
@@ -13,8 +12,8 @@ from leap.workflow.utils import get_manim_api_context
 def error_correction(
     state: GraphState, 
     config: Optional[Dict[str, Any]] = None,
-    llm_service: Optional[LLMService] = None,
-    file_service: Optional[FileService] = None,
+    llm_service: Optional[Any] = None,
+    file_service: Optional[Any] = None,
     **kwargs
 ) -> GraphState:
     """Correct code based on error message using structured output.
@@ -49,6 +48,7 @@ def error_correction(
     manim_api_context = get_manim_api_context()
     
     # Use provided services or create new ones
+    from leap.services import LLMService, FileService
     llm_service = llm_service or LLMService()
     file_service = file_service or FileService()
     

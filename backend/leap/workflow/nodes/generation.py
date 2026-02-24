@@ -4,7 +4,6 @@ from typing import Dict, Any, Optional
 # from leap.workflow.state import GraphState
 from leap.core.logging import setup_question_logger
 from leap.models import ManimCodeResponse
-from leap.services import LLMService
 from leap.workflow.utils import log_state_transition, get_manim_api_context
 from leap.prompts import CODE_GENERATION_PROMPTS
 from leap.prompts.base import PromptVersion
@@ -57,7 +56,7 @@ def _sanitize_generated_code(code: str) -> str:
 
 def generate_code(
     state: Dict[str, Any],
-    llm_service: Optional[LLMService] = None
+    llm_service: Optional[Any] = None
 ) -> Dict[str, Any]:
     """Generate Manim code based on the plan using structured output.
     
@@ -86,6 +85,7 @@ def generate_code(
     api_context = get_manim_api_context()
     
     # Use provided service or create a new one
+    from leap.services import LLMService
     llm_service = llm_service or LLMService()
     
     try:

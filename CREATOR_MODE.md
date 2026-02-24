@@ -51,7 +51,9 @@ Paste this system prompt into your IDE chat:
 >
 > **Option C: Hybrid (Voiceover) Mode**
 > - **REQUIRED:** Inherit from `VoiceoverScene`.
-> - **REQUIRED:** Use `gTTS` service for placeholder audio.
+> - **REQUIRED:** Use `KokoroService` for high-quality local text-to-speech audio. Example:
+>     `from leap.services.kokoro_service import KokoroService`
+>     `self.set_speech_service(KokoroService(voice="am_michael", speed=1.0))`
 > - **Logic:**
 >   - NEVER use `self.wait(X)`.
 >   - Use `with self.voiceover(text="...") as tracker:`
@@ -64,10 +66,10 @@ Paste this system prompt into your IDE chat:
 >     -   Focus on layout, colors, and animation flow.
 >     -   **Goal:** Fast iteration, verify visuals.
 > 2.  **Stage 2: Voice Sync**
->     -   Refactor to `VoiceoverScene` + `gTTS`.
+>     -   Refactor to `VoiceoverScene` + `KokoroService`.
 >     -   Replace `wait()` with `voiceover()`.
 >     -   Ensure animations loop ("Living Plots").
->     -   **Goal:** Perfect timing, ready for final audio.
+>     -   **Goal:** Perfect timing with high-quality generated audio.
 
 ### Workflow
 1. Ask the Agent to create a scene (specify Stage 1 or 2).
