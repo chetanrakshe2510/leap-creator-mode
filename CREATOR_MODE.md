@@ -40,6 +40,10 @@ Paste this system prompt into your IDE chat:
 > **Option B: Vertical Mode (9:16)**
 > - **REQUIRED:** Add `# LEAP_VERTICAL` as the very first line.
 > - Frame: 4.5 x 8.0 (Narrow!)
+># Force native vertical resolution for verical mode (9:16)
+>config.pixel_height = 1920
+>config.pixel_width = 1080
+>config.frame_height = 14.22  # Standard Manim frame height (8.0) scaled for 9:16
 > - **Golden Rules (Prevent Overlaps):**
 >   1. **No Absolute Positioning:** NEVER use `move_to([0, 2.5, 0])`. Use `to_edge(UP, buff=0.5)` to pin to margins.
 >   2. **Group & Arrange:** Use `VGroup(item1, item2).arrange(DOWN, buff=0.5)` for automatic layout.
