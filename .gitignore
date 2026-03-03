@@ -9,6 +9,8 @@ media/
 *.mp4
 *.gif
 *.png
+*.srt
+
 # Environment variables and secrets
 .env
 backend/.env
