@@ -1,60 +1,60 @@
 1
-00:00:00,000 --> 00:00:02,850
-Why does visual thinking make learning so
+00:00:00,000 --> 00:00:03,020
+You’ve been taught that a matrix is just a boring
 
 2
-00:00:02,950 --> 00:00:05,225
-much easier? Let's break it down.
+00:00:03,120 --> 00:00:05,950
+grid of numbers to memorize. You were lied to.
 
 3
-00:00:05,333 --> 00:00:09,551
-Text requires sequential decoding. You have to read words
+00:00:06,033 --> 00:00:09,826
+A matrix is actually a physical warp of space. It stretches,
 
 4
-00:00:09,651 --> 00:00:12,733
-one by one just to build a mental picture.
+00:00:09,926 --> 00:00:14,174
+squishes, and shears the fabric of the universe. When this happens,
 
 5
-00:00:12,833 --> 00:00:17,933
-But with visuals, your brain processes the relationships immediately.
+00:00:14,274 --> 00:00:17,808
+almost every arrow gets knocked completely off its path.
 
 6
-00:00:18,033 --> 00:00:22,133
-This leads to instant recognition of the core concept.
+00:00:17,900 --> 00:00:20,578
+But if you look closely, there are a few rare,
 
 7
-00:00:22,233 --> 00:00:24,583
-Now let's talk about speed.
+00:00:20,678 --> 00:00:24,625
+immortal arrows. They might stretch, they might even flip backward,
 
 8
-00:00:26,683 --> 00:00:30,383
-While reading text takes time and effort to absorb...
+00:00:24,725 --> 00:00:28,250
+but they never change direction. These are the Eigenvectors.
 
 9
-00:00:30,483 --> 00:00:34,208
-Visuals are processed almost instantaneously.
+00:00:29,133 --> 00:00:32,367
+Why do we care? Because these stubborn arrows reveal
 
 10
-00:00:34,300 --> 00:00:37,182
-In fact, the brain processes images up
+00:00:32,467 --> 00:00:35,573
+the hidden skeleton of reality. They are the exact
 
 11
-00:00:37,282 --> 00:00:40,400
-to sixty thousand times faster than text.
+00:00:35,673 --> 00:00:39,933
+mathematical secret to how machine learning compresses massive data,
 
 12
-00:00:40,500 --> 00:00:43,375
-Finally, how well do we remember it?
+00:00:40,033 --> 00:00:42,617
+how bridges vibrate, and how we isolate
 
 13
-00:00:45,483 --> 00:00:50,033
-People typically remember only 20 percent of what they read...
+00:00:42,717 --> 00:00:45,508
+the fundamental rhythms of the human mind.
 
 14
-00:00:50,133 --> 00:00:54,033
-...but they retain up to 80 percent of what they see and do.
+00:00:45,600 --> 00:00:50,175
+Want to stop blindly calculating and actually see the math? Tap the
 
 15
-00:00:54,133 --> 00:00:57,758
-So, don't just read it. See it, and learn it faster.
+00:00:50,275 --> 00:00:54,850
+related video below to unlock the visual secrets of Linear Algebra.
 
