@@ -8,7 +8,7 @@ generated/
 media/
 *.mp4
 *.gif
-
+*.png
 # Environment variables and secrets
 .env
 backend/.env
